@@ -6,13 +6,13 @@ Go to directory where Splunk configuration files are located. (C:\\Program Files
 
 Configure `Inputs.conf` file to log Sysmon and **Save** the file
 ```
-[WinEventLog://Microsoft-Window-Sysmon/Operational] 
-disabled = false 
+[WinEventLog://Microsoft-Windows-Sysmon/Operational]
 index = sysmon
+disabled = false
 renderXml = true
-sourcetype = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
+source = XmlWinEventLog:Microsoft-Windows-Sysmon/Operational
 ```
-![image02](https://github.com/user-attachments/assets/e3a8a8ee-6a67-4246-bb3e-614da213be02)
+![image02](https://github.com/user-attachments/assets/fefdba6f-8d8f-447f-8aaf-51850e1df151)
 
 Make sure you restart the splunk forwarder service. Press `Windows+R` > `services.msc`
 
