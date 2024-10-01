@@ -63,3 +63,52 @@ index=windows EventCode=4625
 ### Dashboard 2: Web Traffic Anomaly Dashboard
 
 **The primary objective of this dashboard is to visualize excessive web traffic and identify suspicious user agents. We'll focus on metrics like total web traffic, unique IP addresses, top user agents, and potential anomalies.**
+
+Firstly, we have to generate some web traffics since this is a controlled lab environment and we will not be getting request from public. We will utilize Nmap, Nikto and OWASP Zap to scan our simple HTTP server.
+
+On our Windows_Server VM, host a simple web server using
+
+```markdown
+python -m http.server 8000 
+```
+![image09](https://github.com/user-attachments/assets/d0ad7ba6-e434-413d-955e-6832bea06354)
+
+On our attack machine, port scan using scanning tools
+
+```markdown
+nmap -sV -p 8000 192.168.17.200
+```
+```markdown
+nikto -h 192.168.17.200:8000
+```
+![image10](https://github.com/user-attachments/assets/b7684e41-ff39-440b-a1cd-5ebdbab17056)
+
+I will also use ZAP for automated scan as well.
+
+![image11](https://github.com/user-attachments/assets/ec32463d-f2e3-459f-b535-65f53b4af871)
+![image12](https://github.com/user-attachments/assets/e671f80e-3b7f-404d-8395-045846ef6e02)
+
+After generating some network traffics, we can filter our events using sysmon event_id=3 (Network Connection Detected) in Splunk.
+
+![image13](https://github.com/user-attachments/assets/42bfdd99-6a8d-47dc-9410-a1f388d90db1)
+
+```markdown
+index=* host="WINDOWS-SERVER" event_id=3
+| stats count by src_ip dest_ip dest_port
+```
+![image14](https://github.com/user-attachments/assets/5079a007-0ec4-4298-abb4-85c8cd4f166b)
+
+We can see internal IPs and loopback IPs are in the events, so we will filter them out by using following query.
+
+```markdown
+index=* host="WINDOWS-SERVER" event_id=3
+| search NOT src_ip IN ("0:0:0:0:0:0:0:1", "224.0.0.251", "ff02:0:0:0:0:0:0:fb", "127.0.0.1", "fe80:0:0:0:1a41:990a:5957:f872")
+| stats count by src_ip dest_ip dest_port
+| sort - count
+| head 10
+```
+![image15](https://github.com/user-attachments/assets/10ecddc9-200e-4787-92f6-c515c7e3c409)
+
+After whitelisting internal IPs, the results can be used in creating a network traffic dashboard. Creating a dashboard for web traffic is similar as in dashboard 1.
+
+![image16](https://github.com/user-attachments/assets/081b6dd5-a54b-4370-9ebe-9b3854de2d7c)
